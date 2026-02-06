@@ -16,6 +16,42 @@ class Board:
     def setValue(self, tttCoords, cellCoords, value):
         self.board[tttCoords[1]][tttCoords[0]].setCell(cellCoords, value)
 
+    def getBoardList(self):
+        ret = []
+        for bigCellRow in self.board:
+            bcr = []
+            for bigCell in bigCellRow:
+                bc = []
+                for smallCellRow in bigCell.cells:
+                    scr = []
+                    for smallCell in smallCellRow:
+                        scr.append(smallCell.value.value)
+                    bc.append(scr)
+                bcr.append(bc)
+            ret.append(bcr)
+        return ret
+
+    def play(self, big_coords, small_coords, player):
+        bigX, bigY = big_coords
+        smallX, smallY = small_coords
+      
+        valid = False
+        nextBigCoords = small_coords
+
+        return (valid, nextBigCoords, player)
+    
+    def checkEmpty(self, big_coords, small_coords):
+        bigX, bigY = big_coords
+        smallX, smallY = small_coords
+
+        bigCell = self.board[bigY][bigX]
+        smallCell = bigCell.cells[smallY][smallX]
+
+        if smallCell.value == CellValues.EMPTY:
+            return True
+        else:
+            return False
+
     def checkWinner(self):
         if self.winner == CellValues.EMPTY:
             
