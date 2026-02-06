@@ -17,13 +17,10 @@ def main():
         print("Creating virtual environment...")
         subprocess.run([sys.executable, "-m", "venv", venv_dir])
         
-        pip_venv = None
         python_venv = None
         if os.name == "nt":
-            pip_venv = os.path.join(venv_dir, "Scripts", "pip")
             python_venv = os.path.join(venv_dir, "Scripts", "python.exe")
         else:
-            pip_venv = os.path.join(venv_dir, "bin", "pip")
             python_venv = os.path.join(venv_dir, "bin", "python")
 
         if python_venv is not None:
@@ -32,12 +29,6 @@ def main():
         else:
             print("ERROR creating venv environment !")
             return
-        
-        if os.path.exists("requirements.txt"):
-            print("Installing packages...")
-            subprocess.run([pip_venv, "install", "-r", "requirements.txt"])
-        else:
-            print("ERROR installing packages !")
     else:
         print("Environment already exists.")
 

@@ -9,10 +9,16 @@ endif
 .PHONY: environment run clean delete
 
 run: environment
-	@$(VENV_PYTHON) main.py
+	$(VENV_PYTHON) main.py
 
 environment:
 	@python scripts/setup_env.py $(MAKECMDGOALS)
+ifeq ($(filter delete,$(MAKECMDGOALS)),)
+	$(MAKE) requirements
+endif
+
+requirements:
+	@$(VENV_PYTHON) scripts/requirements.py $(MAKECMDGOALS)
 
 clean:
 	@python scripts/clean_cache.py
