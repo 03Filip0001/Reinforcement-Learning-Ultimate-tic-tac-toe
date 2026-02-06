@@ -1,31 +1,33 @@
-from src.cell import Cell, CellValues
-from src.ttt import TTT
+import sys
+import pygame
+from src.cell import CellValues
+from src.board import Board
+from src.gameDisplay import GameDisplay
 
-ttt = TTT()
+def main():
+    board = Board()
+    display = GameDisplay(board=board)
+    
+    winner = CellValues.EMPTY
+    currentPlayer = CellValues.X
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                currentPlayer = display.handle_click(event.pos, currentPlayer)
+                
+                winner = board.checkWinner()
+                if winner is not CellValues.EMPTY:
+                    running = False
+        
+        display.update()
+        display.get_clock().tick(10)
+    
+    print("Winner of the game is " + winner.name)
+    pygame.quit()
+    sys.exit()
 
-print(ttt)
-
-currentPlayer = CellValues.X
-msg_str = "Unesi koordinate igraca {}: "
-winner = CellValues.EMPTY
-while winner == CellValues.EMPTY:
-	msg = None
-	if currentPlayer == CellValues.X:
-		msg = msg_str.format(CellValues.X)
-	else:
-		msg = msg_str.format(CellValues.O)
-
-	user_input = input(msg)
-	i, j = map(int, user_input.split())
-
-	ttt.setCell((i,j), currentPlayer)
-	print(ttt)
-
-	if currentPlayer == CellValues.X:
-		currentPlayer = CellValues.O
-	else:
-		currentPlayer = CellValues.X
-
-	winner = ttt.checkWinner()
-
-print(ttt.printWinner())
+if __name__ == "__main__":
+    main()
