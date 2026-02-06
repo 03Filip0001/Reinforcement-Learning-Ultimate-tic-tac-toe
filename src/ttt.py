@@ -32,7 +32,7 @@ class TTT:
 
     
     def setCell(self, coords, value):
-        self.cells[coords[0]][coords[1]].setValue(value)
+        self.cells[coords[1]][coords[0]].setValue(value)
 
     def checkWinner(self):
         if self.winner is CellValues.EMPTY:
