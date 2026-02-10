@@ -12,7 +12,6 @@ def main():
     currentPlayer = CellValues.X
     nextBoardPos = None
     running = True
-    print(board.getBoardList())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
