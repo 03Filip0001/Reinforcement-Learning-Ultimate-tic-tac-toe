@@ -10,19 +10,28 @@ def main():
     
     winner = CellValues.EMPTY
     currentPlayer = CellValues.X
+    nextBoardPos = None
     running = True
+    print(board.getBoardList())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                currentPlayer = display.handle_click(event.pos, currentPlayer)
+                boardPos, cellPos = display.handle_click(event.pos, currentPlayer)
+                valid, nextBoardPos = board.play(boardPos, cellPos, nextBoardPos, currentPlayer)
+
+                if valid:
+                    if currentPlayer == CellValues.X:
+                        currentPlayer = CellValues.O
+                    else:
+                        currentPlayer = CellValues.X
                 
                 winner = board.checkWinner()
                 if winner is not CellValues.EMPTY:
                     running = False
         
-        display.update()
+        display.update(nextBoardPos)
         display.get_clock().tick(10)
     
     print("Winner of the game is " + winner.name)

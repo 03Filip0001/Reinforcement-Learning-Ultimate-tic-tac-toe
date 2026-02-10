@@ -21,6 +21,7 @@ class GameDisplay:
         self.GRAY = (200, 200, 200)
         self.BLUE = (0, 0, 255)
         self.RED = (255, 0, 0)
+        self.OVERLAY_GRAY = (128, 128, 128)
         
         # Size of one tic-tac-toe board
         self.big_cell_size = window_size // 3
@@ -93,19 +94,70 @@ class GameDisplay:
         cell_col = (pos[0] % self.big_cell_size) // self.small_cell_size
         cell_row = (pos[1] % self.big_cell_size) // self.small_cell_size
         
-        self.board.setValue([col, row], [cell_col, cell_row], value)
-        self.board.checkWinner()
-
-        if value == CellValues.X:
-            return CellValues.O
-        else:
-            return CellValues.X
+        return ((col, row), (cell_col, cell_row))
     
-    def update(self):
+    def draw_transparent_rect(self, big_col, big_row, alpha=100):
+        """
+        Crta polu-providni sivi kvadrat preko jednog velikog polja.
+        alpha: 0 (potpuno providno) do 255 (potpuno neprovidno).
+        """
+        s = pygame.Surface((self.big_cell_size, self.big_cell_size))  # Kreiraj površinu veličine jednog velikog polja
+        s.set_alpha(alpha)                # Podesi transparentnost
+        s.fill(self.OVERLAY_GRAY)         # Oboj u sivo
+        
+        x = big_col * self.big_cell_size
+        y = big_row * self.big_cell_size
+        self.screen.blit(s, (x, y))       # "Zalepi" na glavnu površinu
+
+    def draw_big_x(self, big_col, big_row):
+        """Crta veliko X preko celog polja"""
+        center_x = big_col * self.big_cell_size + self.big_cell_size // 2
+        center_y = big_row * self.big_cell_size + self.big_cell_size // 2
+        offset = self.big_cell_size // 3 # Malo veći offset da ne udara u ivice
+        
+        pygame.draw.line(self.screen, self.BLUE, 
+                        (center_x - offset, center_y - offset), 
+                        (center_x + offset, center_y + offset), 10) # Deblja linija
+        pygame.draw.line(self.screen, self.BLUE, 
+                        (center_x + offset, center_y - offset), 
+                        (center_x - offset, center_y + offset), 10)
+
+    def draw_big_o(self, big_col, big_row):
+        """Crta veliko O preko celog polja"""
+        center_x = big_col * self.big_cell_size + self.big_cell_size // 2
+        center_y = big_row * self.big_cell_size + self.big_cell_size // 2
+        radius = self.big_cell_size // 3
+        
+        pygame.draw.circle(self.screen, self.RED, (center_x, center_y), radius, 10) # Deblja linija
+    
+    def update(self, activeBoard):
         """Update display"""
         self.screen.fill(self.WHITE)
         self.draw_grid()
         self.draw_symbols()
+
+        if activeBoard is not None:
+            active_col, active_row = activeBoard
+            for row in range(3):
+                for col in range(3):
+                    if (col, row) != (active_col, active_row):
+                         self.draw_transparent_rect(col, row, alpha=100)
+
+        # 2. ISCRTAVANJE POBEDNIKA I ZAVRŠENIH POLJA
+        for row in range(3):
+            for col in range(3):
+                winner = self.board.board[row][col].checkWinner()
+                
+                if winner != CellValues.EMPTY and winner is not None:
+                    # Prvo posivi malo jače da se istakne da je gotovo
+                    self.draw_transparent_rect(col, row, alpha=150)
+                    
+                    # Onda nacrtaj veliki simbol
+                    if winner == CellValues.X:
+                        self.draw_big_x(col, row)
+                    elif winner == CellValues.O:
+                        self.draw_big_o(col, row)
+
         pygame.display.flip()
     
     def get_clock(self):
