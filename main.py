@@ -4,6 +4,8 @@ from src.cell import CellValues
 from src.board import Board
 from src.gameDisplay import GameDisplay
 
+import pickle
+
 def main():
     board = Board()
     display = GameDisplay(board=board)
@@ -16,6 +18,30 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                print("Saved in temp/")
+                with open("temp/data.json", "wb") as f:
+                    pickle.dump(board, f)
+                    
+                with open("temp/currentPlayer.json", "wb") as f:
+                    pickle.dump(currentPlayer, f)
+
+                with open("temp/nextBoardPos.json", "wb") as f:
+                    pickle.dump(nextBoardPos, f)
+
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_l:
+                print("Loaded from temp/")
+                with open("temp/data.json", "rb") as f:
+                    board = pickle.load(f)
+                    
+                with open("temp/currentPlayer.json", "rb") as f:
+                    currentPlayer = pickle.load(f)
+
+                with open("temp/nextBoardPos.json", "rb") as f:
+                    nextBoardPos = pickle.load(f)
+
+                display.changeBoard(board)
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 boardPos, cellPos = display.handle_click(event.pos, currentPlayer)
                 valid, nextBoardPos = board.play(boardPos, cellPos, nextBoardPos, currentPlayer)

@@ -28,6 +28,9 @@ class GameDisplay:
 
         # Size of one cell in tic-tac-toe board
         self.small_cell_size = self.big_cell_size // 3
+
+    def changeBoard(self, board):
+        self.board = board
     
     def draw_grid(self):
         for row in range(3):
