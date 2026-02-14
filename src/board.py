@@ -45,7 +45,7 @@ class Board:
             self.setValue(bigCoords, smallCoords, player)
             nextBigCoords = smallCoords
             tttWinner = self.board[smallY][smallX].checkWinner()
-            if tttWinner == CellValues.X or tttWinner == CellValues.O:
+            if tttWinner == CellValues.X or tttWinner == CellValues.O or tttWinner == CellValues.DRAW:
                 nextBigCoords = None
         else:
             nextBigCoords = validBoard 
@@ -65,46 +65,46 @@ class Board:
             return False
 
     def checkWinner(self):
-        temp = 0
+        finishedFields = 0
         if self.winner == CellValues.EMPTY:
             for row in range(3):
                 for col in range(3):
                     if self.board[row][col].checkWinner() != CellValues.EMPTY:
-                        temp += 1
-            # DRAW
-            if temp == 9:
+                        finishedFields += 1
+
+            print("Trenutno gotovih polja: ", finishedFields, end="\r")
+
+            # Horizontal winner
+            for i in range(3):
+                if self.board[i][0].checkWinner() == self.board[i][1].checkWinner() and self.board[i][1].checkWinner() == self.board[i][2].checkWinner():
+                    if self.board[i][0].checkWinner() == CellValues.X:
+                        self.winner = CellValues.X
+                    elif self.board[i][0].checkWinner() == CellValues.O:
+                        self.winner = CellValues.O
+
+            # Vertical winner
+            for i in range(3):
+                if self.board[0][i].checkWinner() == self.board[1][i].checkWinner() and self.board[1][i].checkWinner() == self.board[2][i].checkWinner():
+                    if self.board[0][i].checkWinner() == CellValues.X:
+                        self.winner = CellValues.X
+                    elif self.board[0][i].checkWinner() == CellValues.O:
+                        self.winner = CellValues.O
+
+            # Diagonal win 1
+            if self.board[0][0].checkWinner() == self.board[1][1].checkWinner() and self.board[1][1].checkWinner() == self.board[2][2].checkWinner():
+                if self.board[1][1].checkWinner() == CellValues.X:
+                    self.winner = CellValues.X
+                elif self.board[1][1].checkWinner() == CellValues.O:
+                    self.winner = CellValues.O
+
+            # Diagonal win 2
+            if self.board[0][2].checkWinner() == self.board[1][1].checkWinner() and self.board[1][1].checkWinner() == self.board[2][0].checkWinner():
+                if self.board[1][1].checkWinner() == CellValues.X:
+                    self.winner = CellValues.X
+                elif self.board[1][1].checkWinner() == CellValues.O:
+                    self.winner = CellValues.O
+
+            if self.winner == CellValues.EMPTY and finishedFields == 9:
                 self.winner = CellValues.DRAW
-            
-            # Somebody won ?
-            else:
-                # Horizontal winner
-                for i in range(3):
-                    if self.board[i][0].checkWinner() == self.board[i][1].checkWinner() and self.board[i][1].checkWinner() == self.board[i][2].checkWinner():
-                        if self.board[i][0].checkWinner() == CellValues.X:
-                            self.winner = CellValues.X
-                        elif self.board[i][0].checkWinner() == CellValues.O:
-                            self.winner = CellValues.O
-
-                # Vertical winner
-                for i in range(3):
-                    if self.board[0][i].checkWinner() == self.board[1][i].checkWinner() and self.board[1][i].checkWinner() == self.board[2][i].checkWinner():
-                        if self.board[0][i].checkWinner() == CellValues.X:
-                            self.winner = CellValues.X
-                        elif self.board[0][i].checkWinner() == CellValues.O:
-                            self.winner = CellValues.O
-
-                # Diagonal win 1
-                if self.board[0][0].checkWinner() == self.board[1][1].checkWinner() and self.board[1][1].checkWinner() == self.board[2][2].checkWinner():
-                    if self.board[1][1].checkWinner() == CellValues.X:
-                        self.winner = CellValues.X
-                    elif self.board[1][1].checkWinner() == CellValues.O:
-                        self.winner = CellValues.O
-
-                # Diagonal win 2
-                if self.board[0][2].checkWinner() == self.board[1][1].checkWinner() and self.board[1][1].checkWinner() == self.board[2][0].checkWinner():
-                    if self.board[1][1].checkWinner() == CellValues.X:
-                        self.winner = CellValues.X
-                    elif self.board[1][1].checkWinner() == CellValues.O:
-                        self.winner = CellValues.O
 
         return self.winner

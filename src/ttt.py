@@ -35,8 +35,13 @@ class TTT:
         self.cells[coords[1]][coords[0]].setValue(value)
 
     def checkWinner(self):
+        finishedFields = 0
         if self.winner is CellValues.EMPTY:
-            
+            for row in range(3):
+                for col in range(3):
+                    if self.cells[row][col].value != CellValues.EMPTY:
+                        finishedFields += 1
+
             # Horizontal win
             for i in range (3):
                 if self.cells[i][0].getValue() == self.cells[i][1].getValue() and self.cells[i][1].getValue() == self.cells[i][2].getValue():
@@ -66,5 +71,8 @@ class TTT:
                     self.winner = CellValues.X
                 elif self.cells[1][1].getValue() == CellValues.O:
                     self.winner = CellValues.O
+
+            if self.winner == CellValues.EMPTY and finishedFields == 9:
+                self.winner = CellValues.DRAW
 
         return self.winner
