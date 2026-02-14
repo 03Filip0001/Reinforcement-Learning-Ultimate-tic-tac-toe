@@ -5,8 +5,12 @@ from src.board import Board
 from src.gameDisplay import GameDisplay
 
 import pickle
+from pathlib import Path
 
 def main():
+    temp_dir = Path("temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
     board = Board()
     display = GameDisplay(board=board)
     
