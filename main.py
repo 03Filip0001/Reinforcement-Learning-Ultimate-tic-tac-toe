@@ -1,8 +1,8 @@
 import sys
 import pygame
-from src.cell import CellValues
-from src.board import Board
-from src.gameDisplay import GameDisplay
+from src.XO.cell import CellValues
+from src.XO.board import Board
+from src.XO.gameDisplay import GameDisplay
 
 import pickle
 from pathlib import Path
