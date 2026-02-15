@@ -1,5 +1,5 @@
-from src.ttt import TTT
-from src.cell import CellValues
+from ttt import TTT
+from cell import CellValues
 
 class Board:
     def __init__(self):

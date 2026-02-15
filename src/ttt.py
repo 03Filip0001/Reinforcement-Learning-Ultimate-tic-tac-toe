@@ -1,4 +1,4 @@
-from src.cell import Cell, CellValues
+from cell import Cell, CellValues
 
 class TTT:
     def __init__(self):
