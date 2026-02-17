@@ -8,10 +8,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from cell import CellValues
-from env import UltimateTTTEnv
-from mcts import MCTS
-from model import AlphaZeroNet
+from src.cell import CellValues
+from src.env import UltimateTTTEnv
+from src.mcts import MCTS
+from src.model import AlphaZeroNet
 
 
 def self_play_game(model, mcts_simulations, device, temperature_moves=10):

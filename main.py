@@ -1,11 +1,14 @@
 import sys
+import pickle
+from pathlib import Path
+
 import pygame
+import torch
+
 from src.cell import CellValues
 from src.board import Board
 from src.gameDisplay import GameDisplay
-
-import pickle
-from pathlib import Path
+from src.agent import TrainedAgent
 
 def main():
     temp_dir = Path("temp")
@@ -13,6 +16,13 @@ def main():
 
     board = Board()
     display = GameDisplay(board=board)
+
+    model_path = Path("checkpoints\model_1.pt")
+    mcts_simulations = 100
+    human_player = CellValues.X
+    agent_player = CellValues.O
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    agent = TrainedAgent(str(model_path), mcts_simulations=mcts_simulations, device=device)
     
     winner = CellValues.EMPTY
     currentPlayer = CellValues.X
@@ -46,19 +56,27 @@ def main():
 
                 display.changeBoard(board)
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and currentPlayer == human_player:
                 boardPos, cellPos = display.handle_click(event.pos, currentPlayer)
                 valid, nextBoardPos = board.play(boardPos, cellPos, nextBoardPos, currentPlayer)
 
                 if valid:
-                    if currentPlayer == CellValues.X:
-                        currentPlayer = CellValues.O
-                    else:
-                        currentPlayer = CellValues.X
-                
+                    currentPlayer = agent_player
+
                 winner = board.checkWinner()
                 if winner is not CellValues.EMPTY:
                     running = False
+
+        if running and winner is CellValues.EMPTY and currentPlayer == agent_player:
+            boardPos, cellPos = agent.select_move(board, currentPlayer, nextBoardPos)
+            valid, nextBoardPos = board.play(boardPos, cellPos, nextBoardPos, currentPlayer)
+
+            if valid:
+                currentPlayer = human_player
+
+            winner = board.checkWinner()
+            if winner is not CellValues.EMPTY:
+                running = False
         
         display.update(nextBoardPos)
         display.get_clock().tick(10)

@@ -3,10 +3,10 @@ import argparse
 import numpy as np
 import torch
 
-from cell import CellValues
-from env import UltimateTTTEnv
-from mcts import MCTS
-from model import AlphaZeroNet
+from src.cell import CellValues
+from src.env import UltimateTTTEnv
+from src.mcts import MCTS
+from src.model import AlphaZeroNet
 
 
 def play_game(model_a, model_b, mcts_simulations, device):

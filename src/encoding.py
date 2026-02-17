@@ -1,6 +1,6 @@
 import numpy as np
 
-from cell import CellValues
+from src.cell import CellValues
 
 
 def _cell_to_int(v):

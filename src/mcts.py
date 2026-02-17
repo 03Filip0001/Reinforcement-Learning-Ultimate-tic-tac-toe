@@ -3,8 +3,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from cell import CellValues
-from encoding import encode_state, legal_action_mask
+from src.cell import CellValues
+from src.encoding import encode_state, legal_action_mask
 
 
 class MCTSNode:

@@ -1,8 +1,8 @@
 import copy
 
-from board import Board
-from cell import CellValues
-from encoding import index_to_action, legal_action_mask, encode_state
+from src.board import Board
+from src.cell import CellValues
+from src.encoding import index_to_action, legal_action_mask, encode_state
 
 
 class UltimateTTTEnv:

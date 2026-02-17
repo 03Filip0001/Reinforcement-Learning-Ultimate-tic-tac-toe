@@ -1,6 +1,6 @@
 import pygame
-from board import Board
-from cell import CellValues
+from src.board import Board
+from src.cell import CellValues
 
 class GameDisplay:
     def __init__(self, board=None, window_size=900):
