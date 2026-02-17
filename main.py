@@ -35,7 +35,7 @@ def main():
             print("❌ Invalid selection.")
             sys.exit(-1)
             
-        game = Game(agentCount=agentCount, window_size=1500)
+        game = Game(MODEL_PATH, agentCount=agentCount, window_size=1500)
         game.run()
             
     elif choice == 'exit':

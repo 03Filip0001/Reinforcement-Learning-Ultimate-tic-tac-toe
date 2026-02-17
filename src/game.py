@@ -8,7 +8,9 @@ from src.XO.board import Board
 from src.XO.gameDisplay import GameDisplay
 
 class Game:
-    def __init__(self, firstToPlay: int = 0, agentCount: int = 1, window_size: int = 1200):
+    def __init__(self, modelPath: str, firstToPlay: int = 0, agentCount: int = 1, window_size: int = 1200):
+        self.modelPath = modelPath
+        
         self.playerOne = None
         self.playerTwo = None
         
@@ -30,10 +32,10 @@ class Game:
         if agentCount != 2:
             self.playerOne = Player(CellValues.X, PlayerType.HUMAN)
         else:
-            self.playerOne = Player(CellValues.X, PlayerType.AGENT)
+            self.playerOne = Player(CellValues.X, PlayerType.AGENT, modelPath=self.modelPath)
 
         if agentCount == 1 or agentCount == 2:
-            self.playerTwo = Player(CellValues.O, PlayerType.AGENT)
+            self.playerTwo = Player(CellValues.O, PlayerType.AGENT, modelPath=self.modelPath)
         else:
             self.playerTwo = Player(CellValues.O, PlayerType.HUMAN)
                 
@@ -44,6 +46,7 @@ class Game:
             self.update()
             self.render()
             self.display.get_clock().tick(self.FPS)
+        self.display.quit()
     
     def update(self):
         self.handleEvents()
@@ -73,9 +76,9 @@ class Game:
             and self.clicked == True:
             action = (self.clickedBoard, self.clickedCell)
             self.clicked = False
-        else:
+        elif self.currentPlayer.getType() == PlayerType.AGENT:
             # Agent playing
-            action = self.currentPlayer.play()
+            action = self.currentPlayer.play(self.board, self.currentPlayer.getPlayer(), self.nextBoardPos)
         
         return action
     

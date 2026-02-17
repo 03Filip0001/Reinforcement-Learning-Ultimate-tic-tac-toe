@@ -1,6 +1,35 @@
+import copy
+import numpy as np
+import torch
 
-def main():
-	pass
+from src.XO.cell import CellValues
+from src.agent.env import UltimateTTTEnv
+from src.agent.mcts import MCTS
+from src.agent.model import AlphaZeroNet
+from src.agent.encoding import index_to_action
 
-if __name__ == "__main__":
-	main()
+
+class TrainedAgent:
+    def __init__(self, model_path, mcts_simulations=100, device="cpu"):
+        self.device = torch.device(device)
+        self.model = AlphaZeroNet().to(self.device)
+        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+        self.model.eval()
+        self.mcts = MCTS(
+            self.model,
+            n_simulations=mcts_simulations,
+            device=str(self.device),
+            dirichlet_epsilon=0.0,
+        )
+
+    def select_move(self, board, current_player, next_board_pos):
+        env = UltimateTTTEnv()
+        env.board = copy.deepcopy(board)
+        env.current_player = current_player
+        env.next_board_pos = next_board_pos
+        env.done = False
+        env.winner = CellValues.EMPTY
+
+        policy = self.mcts.run(env, add_dirichlet=False)
+        action = int(np.argmax(policy))
+        return index_to_action(action)

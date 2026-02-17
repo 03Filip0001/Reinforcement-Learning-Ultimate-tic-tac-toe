@@ -165,3 +165,6 @@ class GameDisplay:
     
     def get_clock(self):
         return self.clock
+    
+    def quit(self):
+        pygame.quit()
