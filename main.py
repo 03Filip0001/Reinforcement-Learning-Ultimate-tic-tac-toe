@@ -1,71 +1,52 @@
 import sys
-import pygame
-from src.XO.cell import CellValues
-from src.XO.board import Board
-from src.XO.gameDisplay import GameDisplay
-
-import pickle
 from pathlib import Path
+from src.game import Game
+
+MODEL_PATH = "checkpoints/model_1.pt"
 
 def main():
-    temp_dir = Path("temp")
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    board = Board()
-    display = GameDisplay(board=board)
+    print("\n=== Ultimate Tic-Tac-Toe ===")
+    choice = input("Enter command (train/play/exit): ").strip().lower()
     
-    winner = CellValues.EMPTY
-    currentPlayer = CellValues.X
-    nextBoardPos = None
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-                print("Saved in temp/")
-                with open("temp/data.json", "wb") as f:
-                    pickle.dump(board, f)
-                    
-                with open("temp/currentPlayer.json", "wb") as f:
-                    pickle.dump(currentPlayer, f)
+    if choice == 'train':
+        # train()
+        ### TRAIN AGENT
+        pass
+    elif choice == 'play':
+        ### PLAY GAME
+        print("\n--- Play Menu ---")
+        print("1. Against another Player")
+        print("2. Against an Agent")
+        print("3. Back to Main Menu")
 
-                with open("temp/nextBoardPos.json", "wb") as f:
-                    pickle.dump(nextBoardPos, f)
-
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_l:
-                print("Loaded from temp/")
-                with open("temp/data.json", "rb") as f:
-                    board = pickle.load(f)
-                    
-                with open("temp/currentPlayer.json", "rb") as f:
-                    currentPlayer = pickle.load(f)
-
-                with open("temp/nextBoardPos.json", "rb") as f:
-                    nextBoardPos = pickle.load(f)
-
-                display.changeBoard(board)
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                boardPos, cellPos = display.handle_click(event.pos, currentPlayer)
-                valid, nextBoardPos = board.play(boardPos, cellPos, nextBoardPos, currentPlayer)
-
-                if valid:
-                    if currentPlayer == CellValues.X:
-                        currentPlayer = CellValues.O
-                    else:
-                        currentPlayer = CellValues.X
-                
-                winner = board.checkWinner()
-                if winner is not CellValues.EMPTY:
-                    running = False
+        sub_choice = input("Select an option (1-3): ").strip()
+        agentCount = 0
         
-        display.update(nextBoardPos)
-        display.get_clock().tick(10)
-    
-    print("Winner of the game is " + winner.name)
-    pygame.quit()
-    sys.exit()
+        if sub_choice == '1':
+            print("🎮 Local PvP started...")
+            # start_pvp()
+            agentCount = 0
+        elif sub_choice == '2':
+            print("🤖 Agent match started...")
+            # start_agent_match()
+            # playAgent()
+            agentCount = 1
+        else:
+            print("❌ Invalid selection.")
+            sys.exit(-1)
+            
+        game = Game(agentCount=agentCount, window_size=1500)
+        game.run()
+            
+    elif choice == 'exit':
+        ### EXIT GAME
+        print("Goodbye!")
+        sys.exit()
+    else:
+        print("❌ Use 'train', 'play', or 'exit'.")
 
 if __name__ == "__main__":
+    temp_dir = Path("temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    
     main()
