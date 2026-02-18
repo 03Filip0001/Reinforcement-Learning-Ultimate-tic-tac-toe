@@ -100,3 +100,6 @@ class Game:
             
             self.display.changeBoard(self.game.getBoard())
             self.game.changeBoard(self.game.getBoard())
+            
+    def getWinner(self):
+        return self.game.getWinner()

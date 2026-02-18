@@ -51,6 +51,7 @@ def main():
             
         game = Game(MODEL_PATH, agentCount=agentCount, window_size=1500)
         game.run()
+        print("Winner of the game is player: ", game.getWinner())
             
     elif choice == 'exit':
         ### EXIT GAME
