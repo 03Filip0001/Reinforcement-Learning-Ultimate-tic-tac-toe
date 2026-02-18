@@ -90,7 +90,7 @@ class GameDisplay:
         radius = self.small_cell_size // 4
         pygame.draw.circle(self.screen, self.RED, (x, y), radius, 2)
     
-    def handle_click(self, pos, value):
+    def handle_click(self, pos):
         col = pos[0] // self.big_cell_size
         row = pos[1] // self.big_cell_size
         
@@ -165,3 +165,6 @@ class GameDisplay:
     
     def get_clock(self):
         return self.clock
+    
+    def quit(self):
+        pygame.quit()

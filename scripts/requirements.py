@@ -11,7 +11,7 @@ def main():
 
 	if os.path.exists("requirements.txt"):
 		print("Installing packages...")
-		subprocess.run([pip_venv, "install", "-r", "requirements.txt"])
+		subprocess.run([pip_venv, "install", "--no-cache-dir", "-r", "requirements.txt"])
 	else:
 		print("ERROR installing packages !")
 
