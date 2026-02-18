@@ -5,7 +5,7 @@ import argparse
 from src.game import Game
 from src.training.train import train
 
-MODEL_PATH = "checkpoints/model_29.pt"
+MODEL_PATH = "checkpoints/model_0.pt"
 
 def main():
     print("\n=== Ultimate Tic-Tac-Toe ===")
