@@ -3,7 +3,6 @@ from pathlib import Path
 import argparse
 
 from src.game import Game
-from src.agent import agentTrain
 from src.training.train import train
 
 MODEL_PATH = "checkpoints/model_1.pt"
