@@ -7,7 +7,7 @@ from collections import deque
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 
 from src.XO.cell import CellValues
 # from src.training.env import UltimateTTTEnv
@@ -85,7 +85,7 @@ def train(args):
     
     # Optimizer sa lower_precision_grads za CUDA
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
-    scaler = GradScaler()  # Za mixed precision training
+    scaler = GradScaler() if device.type == "cuda" else None  # Za mixed precision training
     replay_buffer = deque(maxlen=args.buffer_size)
 
     os.makedirs(args.checkpoint_dir, exist_ok=True)
@@ -127,9 +127,13 @@ def train(args):
             total_loss += loss.item()
 
             optimizer.zero_grad()
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            if scaler is not None:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
             
             if (step + 1) % max(1, args.train_steps // 5) == 0:
                 print(f"  Step {step + 1}/{args.train_steps}: Loss = {loss.item():.4f}")
