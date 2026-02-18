@@ -7,6 +7,7 @@ from collections import deque
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch.cuda.amp import autocast, GradScaler
 
 from src.XO.cell import CellValues
 # from src.training.env import UltimateTTTEnv
@@ -63,9 +64,10 @@ def encode_examples(examples, device):
         policies.append(policy)
         values.append(z)
 
-    states = torch.from_numpy(np.stack(states, axis=0)).to(device)
-    policies = torch.from_numpy(np.stack(policies, axis=0)).to(device)
-    values = torch.tensor(values, dtype=torch.float32).to(device)
+    # Direktno pravi torch tensore na device-u, ne numpy
+    states = torch.stack([torch.from_numpy(s) for s in states]).float().to(device)
+    policies = torch.stack([torch.from_numpy(p) for p in policies]).float().to(device)
+    values = torch.tensor(values, dtype=torch.float32, device=device)
     return states, policies, values
 
 
@@ -73,9 +75,17 @@ def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
     print(f"Training on device: {device}")
     
+    # GPU memory info
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f}GB")
+    
     model = AlphaZeroNet().to(device)
-
+    
+    # Optimizer sa lower_precision_grads za CUDA
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
+    scaler = GradScaler()  # Za mixed precision training
     replay_buffer = deque(maxlen=args.buffer_size)
 
     os.makedirs(args.checkpoint_dir, exist_ok=True)
@@ -102,20 +112,24 @@ def train(args):
             batch = random.sample(replay_buffer, args.batch_size)
             states, target_policies, target_values = encode_examples(batch, device)
 
-            logits, values = model(states)
-            
-            # Policy loss
-            policy_loss = -torch.mean(torch.sum(target_policies * F.log_softmax(logits, dim=1), dim=1))
-            
-            # Value loss
-            value_loss = F.mse_loss(values, target_values)
-            
-            loss = policy_loss + value_loss
+            # Mixed precision training za brže treniranje na CUDA
+            with autocast(device_type=device.type):
+                logits, values = model(states)
+                
+                # Policy loss
+                policy_loss = -torch.mean(torch.sum(target_policies * F.log_softmax(logits, dim=1), dim=1))
+                
+                # Value loss
+                value_loss = F.mse_loss(values, target_values)
+                
+                loss = policy_loss + value_loss
+
             total_loss += loss.item()
 
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             
             if (step + 1) % max(1, args.train_steps // 5) == 0:
                 print(f"  Step {step + 1}/{args.train_steps}: Loss = {loss.item():.4f}")
@@ -126,6 +140,10 @@ def train(args):
         checkpoint_path = os.path.join(args.checkpoint_dir, f"model_{iteration}.pt")
         torch.save(model.state_dict(), checkpoint_path)
         print(f"✓ Saved: {checkpoint_path}")
+        
+        # Očisti GPU cache
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

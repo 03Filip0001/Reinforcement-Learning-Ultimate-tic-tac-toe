@@ -5,7 +5,7 @@ import argparse
 from src.game import Game
 from src.training.train import train
 
-MODEL_PATH = "checkpoints/model_1.pt"
+MODEL_PATH = "checkpoints/model_29.pt"
 
 def main():
     print("\n=== Ultimate Tic-Tac-Toe ===")
@@ -15,13 +15,13 @@ def main():
         # train()
         ### TRAIN AGENT
         parser = argparse.ArgumentParser()
-        parser.add_argument("--iterations", type=int, default=10)
-        parser.add_argument("--self_play_games", type=int, default=10)
-        parser.add_argument("--mcts_simulations", type=int, default=100)
+        parser.add_argument("--iterations", type=int, default=100)
+        parser.add_argument("--self_play_games", type=int, default=50)
+        parser.add_argument("--mcts_simulations", type=int, default=200)
         parser.add_argument("--temperature_moves", type=int, default=10)
         parser.add_argument("--train_steps", type=int, default=50)
-        parser.add_argument("--batch_size", type=int, default=64)
-        parser.add_argument("--buffer_size", type=int, default=5000)
+        parser.add_argument("--batch_size", type=int, default=2048)
+        parser.add_argument("--buffer_size", type=int, default=10000)
         parser.add_argument("--lr", type=float, default=1e-3)
         parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
         parser.add_argument("--cpu", action="store_true")
