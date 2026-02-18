@@ -4,8 +4,9 @@ import torch
 import torch.nn.functional as F
 
 from src.XO.cell import CellValues
-from src.agent.encoding import encode_state, legal_action_mask
+from src.training.encoding import encode_state, legal_action_mask
 
+from src.gameEnvironment import GameEnvironment
 
 class MCTSNode:
     def __init__(self, prior):
@@ -30,15 +31,15 @@ class MCTS:
         self.dirichlet_epsilon = dirichlet_epsilon
         self.device = device
 
-    def _policy_value(self, env):
-        state = encode_state(env.board, env.current_player, env.next_board_pos)
+    def _policy_value(self, env: GameEnvironment):
+        state = encode_state(env.getBoard(), env.getCurrentPlayer(), env.getNextBoardPos())
         state_t = torch.from_numpy(state).unsqueeze(0).to(self.device)
         with torch.no_grad():
             policy_logits, value = self.model(state_t)
         policy_logits = policy_logits.squeeze(0)
         value = float(value.item())
 
-        mask = legal_action_mask(env.board, env.next_board_pos)
+        mask = legal_action_mask(env.getBoard(), env.getNextBoardPos())
         mask_t = torch.from_numpy(mask).to(self.device)
         policy_logits = torch.where(mask_t > 0, policy_logits, torch.tensor(-1e9, device=self.device))
         policy = F.softmax(policy_logits, dim=0).cpu().numpy()
@@ -66,10 +67,10 @@ class MCTS:
             if legal_mask[action] > 0:
                 node.children[action] = MCTSNode(prior=float(p))
 
-    def run(self, env, add_dirichlet=True):
+    def run(self, env: GameEnvironment, add_dirichlet=True):
         root = MCTSNode(prior=1.0)
         policy, _ = self._policy_value(env)
-        legal_mask = legal_action_mask(env.board, env.next_board_pos)
+        legal_mask = legal_action_mask(env.getBoard(), env.getNextBoardPos())
         self._expand(root, policy, legal_mask)
 
         if add_dirichlet and root.children:
@@ -92,16 +93,16 @@ class MCTS:
                 path.append(node)
 
             if search_env.is_terminal():
-                winner = search_env.winner
+                winner = search_env.getWinner()
                 if winner == CellValues.DRAW:
                     value = 0.0
-                elif winner == search_env.current_player:
+                elif winner == search_env.getCurrentPlayer():
                     value = 1.0
                 else:
                     value = -1.0
             else:
                 policy, value = self._policy_value(search_env)
-                legal_mask = legal_action_mask(search_env.board, search_env.next_board_pos)
+                legal_mask = legal_action_mask(search_env.getBoard(), search_env.getNextBoardPos())
                 self._expand(node, policy, legal_mask)
 
             for node in reversed(path):

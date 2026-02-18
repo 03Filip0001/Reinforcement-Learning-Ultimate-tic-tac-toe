@@ -4,20 +4,21 @@ import numpy as np
 import torch
 
 from src.XO.cell import CellValues
-from src.agent.env import UltimateTTTEnv
-from src.agent.mcts import MCTS
-from src.agent.model import AlphaZeroNet
+# from src.training.env import UltimateTTTEnv
+from src.gameEnvironment import GameEnvironment
+from src.training.mcts import MCTS
+from src.training.model import AlphaZeroNet
 
 
 def play_game(model_a, model_b, mcts_simulations, device):
-    env = UltimateTTTEnv()
+    env = GameEnvironment()
     env.reset()
 
     mcts_a = MCTS(model_a, n_simulations=mcts_simulations, device=device, dirichlet_epsilon=0.0)
     mcts_b = MCTS(model_b, n_simulations=mcts_simulations, device=device, dirichlet_epsilon=0.0)
 
     while not env.is_terminal():
-        if env.current_player == CellValues.X:
+        if env.getCurrentPlayer() == CellValues.X:
             policy = mcts_a.run(env, add_dirichlet=False)
         else:
             policy = mcts_b.run(env, add_dirichlet=False)
@@ -25,7 +26,7 @@ def play_game(model_a, model_b, mcts_simulations, device):
         action = int(np.argmax(policy))
         env.step(action)
 
-    return env.winner
+    return env.getWinner()
 
 
 def evaluate(args):

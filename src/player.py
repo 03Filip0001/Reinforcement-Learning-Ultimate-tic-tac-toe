@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 from src.XO.cell import CellValues
 
-from src.agent.agent import TrainedAgent
+from src.training.agent import TrainedAgent
 
 class PlayerType(Enum):
     HUMAN = auto()

@@ -1,6 +1,10 @@
 import sys
 from pathlib import Path
+import argparse
+
 from src.game import Game
+from src.agent import agentTrain
+from src.training.train import train
 
 MODEL_PATH = "checkpoints/model_1.pt"
 
@@ -11,7 +15,18 @@ def main():
     if choice == 'train':
         # train()
         ### TRAIN AGENT
-        pass
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--iterations", type=int, default=10)
+        parser.add_argument("--self_play_games", type=int, default=10)
+        parser.add_argument("--mcts_simulations", type=int, default=100)
+        parser.add_argument("--temperature_moves", type=int, default=10)
+        parser.add_argument("--train_steps", type=int, default=50)
+        parser.add_argument("--batch_size", type=int, default=64)
+        parser.add_argument("--buffer_size", type=int, default=5000)
+        parser.add_argument("--lr", type=float, default=1e-3)
+        parser.add_argument("--checkpoint_dir", type=str, default="checkpoints")
+        parser.add_argument("--cpu", action="store_true")
+        train(parser.parse_args())
     elif choice == 'play':
         ### PLAY GAME
         print("\n--- Play Menu ---")

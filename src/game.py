@@ -3,32 +3,26 @@ import pickle
 
 from src.player import Player, PlayerType
 
+from src.gameBase import GameBase
 from src.XO.cell import CellValues
-from src.XO.board import Board
 from src.XO.gameDisplay import GameDisplay
 
 class Game:
     def __init__(self, modelPath: str, firstToPlay: int = 0, agentCount: int = 1, window_size: int = 1200):
         self.modelPath = modelPath
         
+        self.game = GameBase()
         self.playerOne = None
         self.playerTwo = None
         
-        self.board: Board = Board()
         self.window_size = window_size
-        self.display = GameDisplay(self.board, self.window_size)
+        self.display = GameDisplay(self.game.getBoard(), self.window_size)
         self.FPS: int = 10
-        
-        self.winner = None
-        
-        self.nextBoardPos           = None
         
         self.clickedBoard:  int     = 0
         self.clickedCell:   int     = 0
         self.clicked:       bool    = False
-        
-        self.running = True
-        
+                
         if agentCount != 2:
             self.playerOne = Player(CellValues.X, PlayerType.HUMAN)
         else:
@@ -39,10 +33,10 @@ class Game:
         else:
             self.playerTwo = Player(CellValues.O, PlayerType.HUMAN)
                 
-        self.currentPlayer: Player = self.playerOne
+        self.currentPlayer: Player = self.playerOne if self.playerOne.getPlayer() == self.game.getCurrentPlayer() else self.playerTwo
         
     def run(self):
-        while self.running:
+        while self.game.getRunning():
             self.update()
             self.render()
             self.display.get_clock().tick(self.FPS)
@@ -54,20 +48,13 @@ class Game:
         if action is None:
             return
         
-        valid, self.nextBoardPos = self.board.play(action[0], action[1], self.nextBoardPos, self.currentPlayer.getPlayer())
-        if valid:
-            self.winner = self.board.checkWinner()
-            
-            if self.winner is not CellValues.EMPTY:
-                self.running = False
-            else:
-                if self.currentPlayer == self.playerOne:
-                    self.currentPlayer = self.playerTwo
-                else:
-                    self.currentPlayer = self.playerOne
+        self.game.play(action[0], action[1], self.currentPlayer.getPlayer())
+        if self.game.getLastValid():
+            self.game.checkWinner()
+            self.currentPlayer: Player = self.playerOne if self.playerOne.getPlayer() == self.game.getCurrentPlayer() else self.playerTwo
     
     def render(self):
-        self.display.update(self.nextBoardPos)
+        self.display.update(self.game.getNextBoardPos())
     
     def getAction(self):
         action = None
@@ -78,20 +65,19 @@ class Game:
             self.clicked = False
         elif self.currentPlayer.getType() == PlayerType.AGENT:
             # Agent playing
-            action = self.currentPlayer.play(self.board, self.currentPlayer.getPlayer(), self.nextBoardPos)
+            action = self.currentPlayer.play(self.game.getBoard(), self.currentPlayer.getPlayer(), self.game.getNextBoardPos())
         
         return action
     
     def handleEvents(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                self.game.setRunning(False)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_s:
                 self.saveGame()
 
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_l:
                 self.loadGame()
-                self.display.changeBoard(self.board)
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if self.currentPlayer.getType() == PlayerType.HUMAN:
@@ -101,13 +87,16 @@ class Game:
     def saveGame(self):
         print("Saved in temp/")
         with open("temp/gameState.json", "wb") as f:
-            gameState = [self.board, self.currentPlayer, self.nextBoardPos]
+            gameState = [self.game.getBoard(), self.currentPlayer, self.game.getNextBoardPos()]
             pickle.dump(gameState, f)
                     
     def loadGame(self):
         print("Loaded from temp/")
         with open("temp/data.json", "rb") as f:
             gameState = pickle.load(f)
-            self.board = gameState[0]
             self.currentPlayer = gameState[1]
-            self.nextBoardPos = gameState[2]
+            self.game.setPlayer(self.currentPlayer.getPlayer())            
+            self.game.setNextBoardPos(gameState[2])
+            
+            self.display.changeBoard(self.game.getBoard())
+            self.game.changeBoard(self.game.getBoard())

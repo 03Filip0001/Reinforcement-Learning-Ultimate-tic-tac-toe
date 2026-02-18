@@ -3,10 +3,11 @@ import numpy as np
 import torch
 
 from src.XO.cell import CellValues
-from src.agent.env import UltimateTTTEnv
-from src.agent.mcts import MCTS
-from src.agent.model import AlphaZeroNet
-from src.agent.encoding import index_to_action
+# from src.training.env import UltimateTTTEnv
+from src.gameEnvironment import GameEnvironment
+from src.training.mcts import MCTS
+from src.training.model import AlphaZeroNet
+from src.training.encoding import index_to_action
 
 
 class TrainedAgent:
@@ -23,11 +24,11 @@ class TrainedAgent:
         )
 
     def select_move(self, board, current_player, next_board_pos):
-        env = UltimateTTTEnv()
+        env = GameEnvironment()
         env.board = copy.deepcopy(board)
-        env.current_player = current_player
-        env.next_board_pos = next_board_pos
-        env.done = False
+        env.setPlayer(current_player)
+        env.nextBoardPos = next_board_pos
+        env.running = True
         env.winner = CellValues.EMPTY
 
         policy = self.mcts.run(env, add_dirichlet=False)

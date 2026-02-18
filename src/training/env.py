@@ -2,7 +2,7 @@ import copy
 
 from src.XO.board import Board
 from src.XO.cell import CellValues
-from src.agent.encoding import index_to_action, legal_action_mask, encode_state
+from src.training.encoding import index_to_action, legal_action_mask, encode_state
 
 
 class UltimateTTTEnv:

@@ -1,5 +1,3 @@
-import sys
-
 import argparse
 import copy
 import os
@@ -10,16 +8,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-if __name__ == "__main__":
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))) 
 from src.XO.cell import CellValues
-from src.agent.env import UltimateTTTEnv
-from src.agent.mcts import MCTS
-from src.agent.model import AlphaZeroNet
+# from src.training.env import UltimateTTTEnv
+from src.gameEnvironment import GameEnvironment
+from src.training.mcts import MCTS
+from src.training.model import AlphaZeroNet
+from src.training.encoding import encode_state
 
 
 def self_play_game(model, mcts_simulations, device, temperature_moves=10):
-    env = UltimateTTTEnv()
+    env = GameEnvironment()
     env.reset()
     mcts = MCTS(model, n_simulations=mcts_simulations, device=device)
 
@@ -28,8 +26,8 @@ def self_play_game(model, mcts_simulations, device, temperature_moves=10):
 
     while not env.is_terminal():
         state = copy.deepcopy(env.board)
-        current_player = env.current_player
-        next_board_pos = copy.deepcopy(env.next_board_pos)
+        current_player = env.getCurrentPlayer()
+        next_board_pos = copy.deepcopy(env.getNextBoardPos())
 
         policy = mcts.run(env, add_dirichlet=True)
 
@@ -57,8 +55,6 @@ def self_play_game(model, mcts_simulations, device, temperature_moves=10):
 
 
 def encode_examples(examples, device):
-    from encoding import encode_state
-
     states = []
     policies = []
     values = []
@@ -75,6 +71,8 @@ def encode_examples(examples, device):
 
 def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() and not args.cpu else "cpu")
+    print(f"Training on device: {device}")
+    
     model = AlphaZeroNet().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
@@ -83,31 +81,51 @@ def train(args):
     os.makedirs(args.checkpoint_dir, exist_ok=True)
 
     for iteration in range(args.iterations):
+        print(f"\n=== Iteration {iteration + 1}/{args.iterations} ===")
+        
         model.eval()
-        for _ in range(args.self_play_games):
+        print(f"Self-play: Running {args.self_play_games} games...")
+        for game_idx in range(args.self_play_games):
             examples = self_play_game(model, args.mcts_simulations, device, args.temperature_moves)
             replay_buffer.extend(examples)
+            print(f"  Game {game_idx + 1}/{args.self_play_games}: Generated {len(examples)} examples")
 
         if len(replay_buffer) < args.batch_size:
+            print(f"Buffer size ({len(replay_buffer)}) < batch size ({args.batch_size}). Skipping training.")
             continue
 
+        print(f"Training: {args.train_steps} steps with buffer size {len(replay_buffer)}")
         model.train()
-        for _ in range(args.train_steps):
+        total_loss = 0
+        
+        for step in range(args.train_steps):
             batch = random.sample(replay_buffer, args.batch_size)
             states, target_policies, target_values = encode_examples(batch, device)
 
             logits, values = model(states)
+            
+            # Policy loss
             policy_loss = -torch.mean(torch.sum(target_policies * F.log_softmax(logits, dim=1), dim=1))
+            
+            # Value loss
             value_loss = F.mse_loss(values, target_values)
+            
             loss = policy_loss + value_loss
+            total_loss += loss.item()
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            
+            if (step + 1) % max(1, args.train_steps // 5) == 0:
+                print(f"  Step {step + 1}/{args.train_steps}: Loss = {loss.item():.4f}")
+
+        avg_loss = total_loss / args.train_steps
+        print(f"Average loss: {avg_loss:.4f}")
 
         checkpoint_path = os.path.join(args.checkpoint_dir, f"model_{iteration}.pt")
         torch.save(model.state_dict(), checkpoint_path)
-        print(f"Saved: {checkpoint_path}")
+        print(f"✓ Saved: {checkpoint_path}")
 
 
 if __name__ == "__main__":
