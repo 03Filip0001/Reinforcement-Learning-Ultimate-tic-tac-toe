@@ -7,8 +7,8 @@ from collections import deque
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.amp import autocast, GradScaler
-
+from torch.amp.autocast_mode import autocast
+from torch.amp.grad_scaler import GradScaler
 from src.XO.cell import CellValues
 # from src.training.env import UltimateTTTEnv
 from src.gameEnvironment import GameEnvironment
@@ -32,12 +32,12 @@ def self_play_game(model, mcts_simulations, device, temperature_moves=10):
 
         policy = mcts.run(env, add_dirichlet=True)
 
-        if move_count < temperature_moves:
+        if move_count < temperature_moves: # first 10 moves - explore more, after that play greedy
             action = int(np.random.choice(len(policy), p=policy))
         else:
             action = int(np.argmax(policy))
 
-        history.append((state, current_player, next_board_pos, policy))
+        history.append((state, current_player, next_board_pos, policy)) # save the state of the board, current player, \next board position and policy vector for each move, so we can use it for training later
         env.step(action)
         move_count += 1
 
@@ -83,7 +83,7 @@ def train(args):
     
     model = AlphaZeroNet().to(device)
     
-    # Optimizer sa lower_precision_grads za CUDA
+    # Optimizer with lower_precision_grads for CUDA
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scaler = GradScaler() if device.type == "cuda" else None  # Za mixed precision training
     replay_buffer = deque(maxlen=args.buffer_size)
@@ -93,9 +93,9 @@ def train(args):
     for iteration in range(args.iterations):
         print(f"\n=== Iteration {iteration + 1}/{args.iterations} ===")
         
-        model.eval()
+        model.eval() # IMPORTANT model doesnt train while we playing (evaluating)
         print(f"Self-play: Running {args.self_play_games} games...")
-        for game_idx in range(args.self_play_games):
+        for game_idx in range(args.self_play_games): #playing against itself and generating examples for training
             examples = self_play_game(model, args.mcts_simulations, device, args.temperature_moves)
             replay_buffer.extend(examples)
             print(f"  Game {game_idx + 1}/{args.self_play_games}: Generated {len(examples)} examples")
@@ -109,10 +109,10 @@ def train(args):
         total_loss = 0
         
         for step in range(args.train_steps):
-            batch = random.sample(replay_buffer, args.batch_size)
+            batch = random.sample(replay_buffer, args.batch_size) # take random batch of examples so agent wont learn only from most recent games
             states, target_policies, target_values = encode_examples(batch, device)
 
-            # Mixed precision training za brže treniranje na CUDA
+            # Mixed precision training for faster training on CUDA
             with autocast(device_type=device.type):
                 logits, values = model(states)
                 
@@ -122,15 +122,15 @@ def train(args):
                 # Value loss
                 value_loss = F.mse_loss(values, target_values)
                 
-                loss = policy_loss + value_loss
+                loss = policy_loss + value_loss # loss is how much NN and MCTS predictions differ
 
             total_loss += loss.item()
 
             optimizer.zero_grad()
             if scaler is not None:
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                scaler.scale(loss).backward() # calculating gradients with mixed precision
+                scaler.step(optimizer) # update weights
+                scaler.update() 
             else:
                 loss.backward()
                 optimizer.step()
@@ -145,7 +145,7 @@ def train(args):
         torch.save(model.state_dict(), checkpoint_path)
         print(f"✓ Saved: {checkpoint_path}")
         
-        # Očisti GPU cache
+        # clear GPU cache after each iteration to free up memory
         if device.type == "cuda":
             torch.cuda.empty_cache()
 

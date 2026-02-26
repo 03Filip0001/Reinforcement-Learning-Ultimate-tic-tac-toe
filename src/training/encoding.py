@@ -32,16 +32,16 @@ def _normalized_next_board(board, next_board_pos):
 
 def encode_state(board, current_player, next_board_pos):
     grid = board.getBoardList()  # [big_row][big_col][cell_row][cell_col]
-    x_plane = np.zeros((9, 9), dtype=np.float32)
-    o_plane = np.zeros((9, 9), dtype=np.float32)
-    nb_plane = np.zeros((9, 9), dtype=np.float32)
-    cp_plane = np.zeros((9, 9), dtype=np.float32)
+    x_plane = np.zeros((9, 9), dtype=np.float32) # where X played
+    o_plane = np.zeros((9, 9), dtype=np.float32) # where O played
+    nb_plane = np.zeros((9, 9), dtype=np.float32) # next board - legal moves
+    cp_plane = np.zeros((9, 9), dtype=np.float32) # current player - all 1s for X, all 0s for O
 
     for br in range(3):
         for bc in range(3):
             for cr in range(3):
                 for cc in range(3):
-                    v = _cell_to_int(grid[br][bc][cr][cc])
+                    v = _cell_to_int(grid[br][bc][cr][cc]) # -2 -1 0 1 
                     r = br * 3 + cr
                     c = bc * 3 + cc
                     if v == CellValues.X.value:
@@ -50,15 +50,15 @@ def encode_state(board, current_player, next_board_pos):
                         o_plane[r][c] = 1.0
 
     next_board_pos = _normalized_next_board(board, next_board_pos)
-    if next_board_pos is None:
+    if next_board_pos is None: # No board restriction
         nb_plane[:, :] = 1.0
-    else:
+    else:                       #Must play in specific board
         nbx, nby = next_board_pos
         for cr in range(3):
             for cc in range(3):
                 r = nby * 3 + cr
                 c = nbx * 3 + cc
-                nb_plane[r][c] = 1.0
+                nb_plane[r][c] = 1.0 # Only mark cells in the allowed 3x3 board
 
     cp_value = 1.0 if current_player == CellValues.X else 0.0
     cp_plane[:, :] = cp_value
@@ -75,7 +75,7 @@ def legal_action_mask(board, next_board_pos):
     for br in range(3):
         for bc in range(3):
             if next_board_pos is not None and (bc, br) != next_board_pos:
-                continue
+                continue # already someone won or iteration is not in thah board
 
             if board.board[br][bc].checkWinner() != CellValues.EMPTY:
                 continue

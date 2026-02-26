@@ -30,7 +30,7 @@ class GameEnvironment(GameBase):
         if not self.valid:
             raise ValueError("Illegal move selected")
         
-        self.checkWinner()  # ✅ DODAJ OVO!
+        self.checkWinner()  #  DODAJ OVO!
         
         reward = 0.0
         if not self.running:

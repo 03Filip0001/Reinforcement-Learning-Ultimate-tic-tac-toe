@@ -5,7 +5,7 @@ import argparse
 from src.game import Game
 from src.training.train import train
 
-MODEL_PATH = "checkpoints/model_0.pt"
+MODEL_PATH = "checkpoints/model_29.pt"
 
 def main():
     print("\n=== Ultimate Tic-Tac-Toe ===")
@@ -49,7 +49,7 @@ def main():
             print("❌ Invalid selection.")
             sys.exit(-1)
             
-        game = Game(MODEL_PATH, agentCount=agentCount, window_size=1500)
+        game = Game(MODEL_PATH, agentCount=agentCount, window_size=700)
         game.run()
         print("Winner of the game is player: ", game.getWinner())
             

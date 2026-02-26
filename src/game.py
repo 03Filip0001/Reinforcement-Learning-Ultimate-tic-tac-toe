@@ -1,3 +1,4 @@
+from typing import Optional
 import pygame
 import pickle
 
@@ -12,15 +13,15 @@ class Game:
         self.modelPath = modelPath
         
         self.game = GameBase()
-        self.playerOne = None
-        self.playerTwo = None
+        self.playerOne: Optional[Player] = None
+        self.playerTwo: Optional[Player] = None
         
         self.window_size = window_size
         self.display = GameDisplay(self.game.getBoard(), self.window_size)
         self.FPS: int = 10
         
         self.clickedBoard:  int     = 0
-        self.clickedCell:   int     = 0
+        self.clickedCell:   tuple[int, int] = (0, 0)
         self.clicked:       bool    = False
                 
         if agentCount != 2:
@@ -32,8 +33,11 @@ class Game:
             self.playerTwo = Player(CellValues.O, PlayerType.AGENT, modelPath=self.modelPath)
         else:
             self.playerTwo = Player(CellValues.O, PlayerType.HUMAN)
-                
-        self.currentPlayer: Player = self.playerOne if self.playerOne.getPlayer() == self.game.getCurrentPlayer() else self.playerTwo
+        
+        assert self.playerOne is not None and self.playerTwo is not None
+        player_one: Player = self.playerOne
+        player_two: Player = self.playerTwo
+        self.currentPlayer: Player = player_one if player_one.getPlayer() == self.game.getCurrentPlayer() else player_two
         
     def run(self):
         while self.game.getRunning():
@@ -51,7 +55,11 @@ class Game:
         self.game.play(action[0], action[1], self.currentPlayer.getPlayer())
         if self.game.getLastValid():
             self.game.checkWinner()
-            self.currentPlayer: Player = self.playerOne if self.playerOne.getPlayer() == self.game.getCurrentPlayer() else self.playerTwo
+            player_one: Player = self.playerOne if self.playerOne is not None else self.playerTwo
+            player_two: Player = self.playerTwo if self.playerTwo is not None else self.playerOne
+            new_player = player_one if player_one.getPlayer() == self.game.getCurrentPlayer() else player_two
+            assert new_player is not None
+            self.currentPlayer = new_player
     
     def render(self):
         self.display.update(self.game.getNextBoardPos())

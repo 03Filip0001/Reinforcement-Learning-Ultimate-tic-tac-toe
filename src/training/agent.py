@@ -20,17 +20,17 @@ class TrainedAgent:
             self.model,
             n_simulations=mcts_simulations,
             device=str(self.device),
-            dirichlet_epsilon=0.0,
+            dirichlet_epsilon=0.0, # dont explore, play greedy
         )
 
     def select_move(self, board, current_player, next_board_pos):
-        env = GameEnvironment()
+        env = GameEnvironment() # neural network says which actions seems to be good
         env.board = copy.deepcopy(board)
         env.setPlayer(current_player)
         env.nextBoardPos = next_board_pos
         env.running = True
         env.winner = CellValues.EMPTY
 
-        policy = self.mcts.run(env, add_dirichlet=False)
-        action = int(np.argmax(policy))
+        policy = self.mcts.run(env, add_dirichlet=False) # mctr simulates games and returns policy vector (81) with probabilities for each action
+        action = int(np.argmax(policy)) # return index of the cell with the highest probability of winning
         return index_to_action(action)

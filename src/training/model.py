@@ -40,13 +40,13 @@ class AlphaZeroNet(nn.Module):
 
         policy = self.policy_conv(x)
         policy = F.relu(self.policy_bn(policy))
-        policy = policy.view(policy.size(0), -1)
+        policy = policy.view(policy.size(0), -1) # converting into vector
         policy = self.policy_fc(policy)
 
         value = self.value_conv(x)
         value = F.relu(self.value_bn(value))
-        value = value.view(value.size(0), -1)
+        value = value.view(value.size(0), -1) # converting into vector
         value = F.relu(self.value_fc1(value))
-        value = torch.tanh(self.value_fc2(value))
+        value = torch.tanh(self.value_fc2(value)) # -1 to 1 from lose, draw to win
 
-        return policy, value.squeeze(1)
+        return policy, value.squeeze(1) # return policy action and value of each state 

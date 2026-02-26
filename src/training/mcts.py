@@ -8,9 +8,9 @@ from src.training.encoding import encode_state, legal_action_mask
 
 from src.gameEnvironment import GameEnvironment
 
-class MCTSNode:
+class MCTSNode: #each state of board is one node
     def __init__(self, prior):
-        self.prior = prior
+        self.prior = prior #probability of selecting this node based on AlphaZero nn prediction
         self.visit_count = 0
         self.value_sum = 0.0
         self.children = {}
@@ -41,8 +41,8 @@ class MCTS:
 
         mask = legal_action_mask(env.getBoard(), env.getNextBoardPos())
         mask_t = torch.from_numpy(mask).to(self.device)
-        policy_logits = torch.where(mask_t > 0, policy_logits, torch.tensor(-1e9, device=self.device))
-        policy = F.softmax(policy_logits, dim=0).cpu().numpy()
+        policy_logits = torch.where(mask_t > 0, policy_logits, torch.tensor(-1e9, device=self.device)) #if action is valid - keep it, if is not - set to very low value so it wont be selected
+        policy = F.softmax(policy_logits, dim=0).cpu().numpy() # all negative values will have zero probability, valid actions will have probabilities based on their logits
         return policy, value
 
     def _select_child(self, node):
@@ -53,7 +53,7 @@ class MCTS:
 
         for action, child in node.children.items():
             q_value = child.value
-            u_value = self.c_puct * child.prior * math.sqrt(total_visits) / (1 + child.visit_count)
+            u_value = self.c_puct * child.prior * math.sqrt(total_visits) / (1 + child.visit_count) #make our agent to explore less visited nodes, but also consider the prior probability of winning from that node
             score = q_value + u_value
             if score > best_score:
                 best_score = score
@@ -81,16 +81,16 @@ class MCTS:
 
         for _ in range(self.n_simulations):
             node = root
-            search_env = env.clone()
+            search_env = env.clone() #clone the board and simulate the game on that clone, so we dont change the real board state
             path = [node]
 
             while node.children:
-                action, next_node = self._select_child(node)
+                action, next_node = self._select_child(node) # select child
                 if next_node is None:
                     break
-                search_env.step(action)
+                search_env.step(action) # play that action on the cloned board
                 node = next_node
-                path.append(node)
+                path.append(node) # add the node to the path, so we can backpropagate the value later
 
             if search_env.is_terminal():
                 winner = search_env.getWinner()

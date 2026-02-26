@@ -54,9 +54,6 @@ class GameBase:
     def setRunning(self):
         self.running = False
     
-    def getWinner(self):
-        return self.winner
-    
     def getCurrentPlayer(self):
         return self.currentPlayer
     
